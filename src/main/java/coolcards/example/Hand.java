@@ -20,6 +20,10 @@ public class Hand {
         Collections.sort(cards);
     }
 
+    // public void TrueEvalute(){
+
+    // }
+
     public void Evaluate(){
         bestHand = new ArrayList<Card>();
 
@@ -36,7 +40,8 @@ public class Hand {
             return;
             
         }
-
+        bestHand.clear();
+        highCardValue = 0;
         //FourKind: WORKING
         nKindCheck(4);
 
@@ -45,6 +50,8 @@ public class Hand {
             return;
         }
 
+        bestHand.clear();
+        highCardValue = 0;
         //FullHouse: WORKING
         FullHouse();
         if(!bestHand.isEmpty()){
@@ -53,7 +60,8 @@ public class Hand {
         }
         
 
-
+        bestHand.clear();
+        highCardValue = 0;
         //Flush: WORKING
         if(cards.size() >= 5) CheckForFlush(4);
         if(cards.size() >= 6) CheckForFlush(5);
@@ -66,6 +74,8 @@ public class Hand {
             return;
         }
 
+        bestHand.clear();
+        highCardValue = 0;
         //Straight: WORKING
         if(cards.size() >= 5) CheckForStraight(0);
         if(cards.size() >= 6) CheckForStraight(1);
@@ -78,6 +88,47 @@ public class Hand {
             return;
         }
         
+        bestHand.clear();
+        highCardValue = 0;
+        //ThreeKind: WORKING
+        nKindCheck(3);
+
+        if(!bestHand.isEmpty()){
+            rank = 7;
+            return;
+        }
+
+        bestHand.clear();
+        highCardValue = 0;
+        //TwoPair
+        TwoPair();
+
+        if(!bestHand.isEmpty()){
+            rank = 8;
+            Collections.sort(bestHand);
+            highCardValue = bestHand.get(4).getValue();
+            return;
+        }
+
+        bestHand.clear();
+        highCardValue = 0;
+        //Pair
+        nKindCheck(2);
+        if(!bestHand.isEmpty()){
+            rank = 9;
+            return;
+        }
+
+        bestHand.clear();
+        highCardValue = 0;
+        //HighCard
+        
+        bestHand = new ArrayList<Card>(cards.subList(cards.size()-5, cards.size()));
+        if(!bestHand.isEmpty()){
+            rank = 10;
+            highCardValue = bestHand.get(4).getValue();
+            return;
+        }
     
     }
 
@@ -88,12 +139,16 @@ public class Hand {
             System.out.println(bestHand.get(i));
         }
         switch(rank){
-            case 1: System.out.println("royalFlush"); break;
+            case 1: System.out.println("royalFlush"); break; 
             case 2: System.out.println("straightFlush"); break;
             case 3: System.out.println("4Kind"); break;
             case 4: System.out.println("Full House"); break;
             case 5: System.out.println("flush"); break;
             case 6: System.out.println("straight"); break;
+            case 7: System.out.println("3Kind"); break;
+            case 8: System.out.println("2Pair"); break;
+            case 9: System.out.println("Pair"); break;
+            case 10: System.out.println("HighCard"); break;
             default: System.out.println("unknown type 404"); break;
         }
         System.out.println("highCard: " + highCardValue);
@@ -101,9 +156,9 @@ public class Hand {
 
     public void nKindCheck(int n){
         for (int i = cards.size() - 1; i > -1; i--){
-            Card randomCard = new Card(null, null, i);
             int checkCard = cards.get(i).getValue();
             int occurences = 0;
+            ArrayList<Card> randomCards = new ArrayList<Card>();
             ArrayList<Card> FourKindHand = new ArrayList<Card>();
             for (int j = cards.size() - 1; j > -1; j--){
                 
@@ -112,15 +167,19 @@ public class Hand {
                     FourKindHand.add(cards.get(j));
                     highCardValue = checkCard;
                 }
-                else{
-                    randomCard = cards.get(j);
-                    if (FourKindHand.size() < (5-n)) FourKindHand.add(randomCard);
-                }
                 // System.out.println("Check Card:" +  checkCard);
                 // System.out.println("Check Card Get:" + cards.get(j).getValue());
             }  
             if (occurences == n){
                 bestHand = FourKindHand;
+
+                for(int k = 0; k < cards.size(); k++){
+                    if(cards.get(k).getValue() != checkCard){
+                        bestHand.add(cards.get(k));
+                    }
+                    if(bestHand.size() == 5) break;
+                }
+               // bestHand.addAll(randomCards);
                 return;
             }
         }
@@ -128,6 +187,49 @@ public class Hand {
 
     public void FullHouse(){
         ArrayList<Card> FullHouseHand = new ArrayList<Card>();
+        for (int i = cards.size() - 1; i > -1; i--){
+            int checkCard = cards.get(i).getValue();
+            int occurences = 0;
+            FullHouseHand.clear();
+            for (int j = cards.size() - 1; j > -1; j--){
+                
+                if (cards.get(j).getValue() == checkCard) {
+                    occurences += 1;
+                    FullHouseHand.add(cards.get(j));
+                    highCardValue = checkCard;
+                }
+            }  
+            if (occurences == 3){
+                break;
+            }
+        }
+        if (FullHouseHand.size() != 3) {
+            return;
+        }
+        
+        for (int i = cards.size() - 1; i > -1; i--){
+            int checkCard = cards.get(i).getValue();
+            int occurences = 0;
+            ArrayList<Card> part2 = new ArrayList<Card>();
+            for (int j = cards.size() - 1; j > -1; j--){
+                if (cards.get(j).getValue() == checkCard && checkCard != highCardValue) {
+                    occurences += 1;
+                    part2.add(cards.get(j));
+                }
+            }  
+            if (occurences == 2){
+                bestHand.addAll(part2);
+                bestHand.addAll(FullHouseHand);
+                return;
+            }
+        }
+    }
+
+    public void TwoPair(){
+        ArrayList<Card> FullHouseHand = new ArrayList<Card>();
+        Card randomCard = new Card(null, null, 0);
+        int highCardValue1 = 0;
+
         for (int i = cards.size() - 1; i > -1; i--){
             int checkCard = cards.get(i).getValue();
             int occurences = 0;
@@ -139,7 +241,7 @@ public class Hand {
                     highCardValue = checkCard;
                 }
             }  
-            if (occurences == 3){
+            if (occurences == 2){
                 break;
             }
         }
@@ -153,12 +255,17 @@ public class Hand {
                 if (cards.get(j).getValue() == checkCard && checkCard != highCardValue) {
                     occurences += 1;
                     part2.add(cards.get(j));
-                    highCardValue = checkCard;
+                    highCardValue1 = checkCard;
+                }
+                else if (cards.get(j).getValue() != highCardValue) {
+                    //randomCard = cards.get(j);
                 }
             }  
             if (occurences == 2){
                 bestHand.addAll(part2);
                 bestHand.addAll(FullHouseHand);
+                bestHand.add(randomCard);
+                highCardValue = Math.max(highCardValue, highCardValue1);
                 return;
             }
         }

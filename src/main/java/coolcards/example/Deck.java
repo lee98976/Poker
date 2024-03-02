@@ -44,13 +44,13 @@ public class Deck {
 
     public Hand GetNewHand() {
         Hand newHand = new Hand();
-        newHand.AddCard(new Card("4", "Spades", 4));
-        newHand.AddCard(new Card("4", "Hearts", 4));
-        newHand.AddCard(new Card("4", "Clubs", 4));
-        newHand.AddCard(new Card("5", "Spades", 5));
-        newHand.AddCard(new Card("6", "Clubs", 6));
-        newHand.AddCard(new Card("4", "Diamond", 4));
-        newHand.AddCard(new Card("2", "Clubs", 2));
+        newHand.AddCard(new Card("2", "weqe", 2));
+        newHand.AddCard(new Card("K", "Spades", 13));
+        newHand.AddCard(new Card("Q", "Spades", 12));
+        newHand.AddCard(new Card("3", "Spades", 3));
+        newHand.AddCard(new Card("A", "Spades", 14));
+        newHand.AddCard(new Card("9", "qr", 9));
+        newHand.AddCard(new Card("5", "fwdf", 5));
         
         newHand.Sort();
         newHand.Evaluate();
