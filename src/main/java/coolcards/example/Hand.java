@@ -42,7 +42,7 @@ public class Hand {
         nKindCheck(4);
 
         if(!bestHand.isEmpty()){
-
+            rank = 3;
             return;
         }
 
@@ -136,7 +136,7 @@ public class Hand {
             case 1: System.out.println("royalFlush"); break; 
             case 2: System.out.println("straightFlush"); break;
             case 3: System.out.println("4Kind"); break;
-            case 4: System.out.println("Full House"); break;
+            case 4: System.out.println("fullHouse"); break;
             case 5: System.out.println("flush"); break;
             case 6: System.out.println("straight"); break;
             case 7: System.out.println("3Kind"); break;
@@ -283,10 +283,7 @@ public class Hand {
                 if(temp.size() ==5) break;
             }
             if(temp.size() ==5){
-                if(straightFlush.isEmpty()) straightFlush = temp;
-                if(straightFlush.get(4).getValue()<temp.get(4).getValue()){
-                    straightFlush = temp;
-                }
+                straightFlush = temp;
             }
         }
         if(straightFlush.size() ==5) {
@@ -334,10 +331,7 @@ public class Hand {
                 if(temp.size() ==5) break;
             }
             if(temp.size() ==5){
-                if(straight.isEmpty()) straight = temp;
-                if(straight.get(4).getValue()<temp.get(4).getValue()){
-                    straight = temp;
-                }
+                straight = temp;
             }
         }
         if(straight.size() ==5) {
