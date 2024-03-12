@@ -28,13 +28,9 @@ public class Hand {
         bestHand = new ArrayList<Card>();
 
         //Straight Flush and Royal Flush: WORKING
-        if(cards.size() >= 5) CheckForStraightFlush(0);
-        if(cards.size() >= 6) CheckForStraightFlush(1);
-        if(cards.size() == 7) CheckForStraightFlush(2);
+        CheckForStraightFlush();
         
         if(!bestHand.isEmpty()){
-            Collections.sort(bestHand);
-            highCardValue = bestHand.get(4).getValue();
             if(highCardValue != 14) rank = 2;
             else rank = 1;
             return;
@@ -46,7 +42,7 @@ public class Hand {
         nKindCheck(4);
 
         if(!bestHand.isEmpty()){
-            rank = 3;
+
             return;
         }
 
@@ -76,15 +72,13 @@ public class Hand {
 
         bestHand.clear();
         highCardValue = 0;
-        //Straight: WORKING
-        if(cards.size() >= 5) CheckForStraight(0);
-        if(cards.size() >= 6) CheckForStraight(1);
-        if(cards.size() == 7) CheckForStraight(2);
+
+        //Straight
+        CheckForStraight();
+
 
         if(!bestHand.isEmpty()){
             rank = 6;
-            Collections.sort(bestHand);
-            highCardValue = bestHand.get(4).getValue();
             return;
         }
         
@@ -158,28 +152,24 @@ public class Hand {
         for (int i = cards.size() - 1; i > -1; i--){
             int checkCard = cards.get(i).getValue();
             int occurences = 0;
-            ArrayList<Card> randomCards = new ArrayList<Card>();
-            ArrayList<Card> FourKindHand = new ArrayList<Card>();
+            ArrayList<Card> duplicateCards = new ArrayList<Card>();
             for (int j = cards.size() - 1; j > -1; j--){
                 
                 if (cards.get(j).getValue() == checkCard) {
                     occurences += 1;
-                    FourKindHand.add(cards.get(j));
+                    duplicateCards.add(cards.get(j));
                     highCardValue = checkCard;
                 }
-                // System.out.println("Check Card:" +  checkCard);
-                // System.out.println("Check Card Get:" + cards.get(j).getValue());
             }  
             if (occurences == n){
-                bestHand = FourKindHand;
-
+                bestHand = duplicateCards;
+                // Fills the list up with extra
                 for(int k = 0; k < cards.size(); k++){
                     if(cards.get(k).getValue() != checkCard){
                         bestHand.add(cards.get(k));
                     }
                     if(bestHand.size() == 5) break;
                 }
-               // bestHand.addAll(randomCards);
                 return;
             }
         }
@@ -226,7 +216,7 @@ public class Hand {
     }
 
     public void TwoPair(){
-        ArrayList<Card> FullHouseHand = new ArrayList<Card>();
+        ArrayList<Card> firstPair = new ArrayList<Card>();
         Card randomCard = new Card(null, null, 0);
         int highCardValue1 = 0;
 
@@ -237,7 +227,7 @@ public class Hand {
                 
                 if (cards.get(j).getValue() == checkCard) {
                     occurences += 1;
-                    FullHouseHand.add(cards.get(j));
+                    firstPair.add(cards.get(j));
                     highCardValue = checkCard;
                 }
             }  
@@ -249,21 +239,21 @@ public class Hand {
         for (int i = cards.size() - 1; i > -1; i--){
             int checkCard = cards.get(i).getValue();
             int occurences = 0;
-            ArrayList<Card> part2 = new ArrayList<Card>();
+            ArrayList<Card> secondPair = new ArrayList<Card>();
             for (int j = cards.size() - 1; j > -1; j--){
                 
                 if (cards.get(j).getValue() == checkCard && checkCard != highCardValue) {
                     occurences += 1;
-                    part2.add(cards.get(j));
+                    secondPair.add(cards.get(j));
                     highCardValue1 = checkCard;
                 }
                 else if (cards.get(j).getValue() != highCardValue) {
-                    //randomCard = cards.get(j);
+                    randomCard = cards.get(j);
                 }
             }  
             if (occurences == 2){
-                bestHand.addAll(part2);
-                bestHand.addAll(FullHouseHand);
+                bestHand.addAll(secondPair);
+                bestHand.addAll(firstPair);
                 bestHand.add(randomCard);
                 highCardValue = Math.max(highCardValue, highCardValue1);
                 return;
@@ -271,24 +261,40 @@ public class Hand {
         }
     }
 
-    void CheckForStraightFlush(int i){
+    void CheckForStraightFlush(){
         ArrayList<Card> straightFlush = new ArrayList<Card>();
-        String suitName = cards.get(i).getSuit();
-        int startingValue = cards.get(i).getValue();
-        straightFlush.add(cards.get(i));
+        for(int i=0; i< cards.size() -1; i++){
+            ArrayList<Card> temp = new ArrayList<Card>();
+            temp.add(cards.get(i));
+            int currentValue = cards.get(i).getValue();
+            String currentSuit = cards.get(i).getSuit();
+            for(int j=i+1; j< cards.size(); j++){
+                int nextValue= cards.get(j).getValue();
 
-        for (int j = i+1; j < i+5; j++) {
-            if (startingValue + 1 == cards.get(j).getValue() && suitName.equals(cards.get(j).getSuit())){
-                straightFlush.add(cards.get(j));
-                startingValue++;
+                if(currentValue == nextValue-1 
+                    && currentSuit.equals(cards.get(j).getSuit())){
+                    temp.add(cards.get(j));
+                    currentValue++;
+                }
+                else if(currentValue ==5 && nextValue ==14
+                    && currentSuit.equals(cards.get(j).getSuit())){
+                    temp.add(0,cards.get(j));
+                }
+                if(temp.size() ==5) break;
             }
-            else{
-                return;
+            if(temp.size() ==5){
+                if(straightFlush.isEmpty()) straightFlush = temp;
+                if(straightFlush.get(4).getValue()<temp.get(4).getValue()){
+                    straightFlush = temp;
+                }
             }
         }
-
-        bestHand = straightFlush; return;
+        if(straightFlush.size() ==5) {
+            bestHand = straightFlush;
+            highCardValue = straightFlush.get(4).getValue();
+        }
     }
+
 
     void CheckForFlush(int i){
         ArrayList<Card> flush = new ArrayList<Card>();
@@ -309,23 +315,38 @@ public class Hand {
             return;
     }
 
-    void CheckForStraight(int i){
+    void CheckForStraight(){
         ArrayList<Card> straight = new ArrayList<Card>();
-        int startingValue = cards.get(i).getValue();
-        straight.add(cards.get(i));
+        for(int i=0; i< cards.size() -1; i++){
+            ArrayList<Card> temp = new ArrayList<Card>();
+            temp.add(cards.get(i));
+            int currentValue = cards.get(i).getValue();
+            for(int j=i+1; j< cards.size(); j++){
+                int nextValue= cards.get(j).getValue();
 
-        for (int j = i+1; j < i+5; j++) {
-            if (startingValue + 1 == cards.get(j).getValue()){
-                straight.add(cards.get(j));
-                startingValue++;
+                if(currentValue == nextValue-1){
+                    temp.add(cards.get(j));
+                    currentValue++;
+                }
+                else if(currentValue ==5 && nextValue ==14){
+                    temp.add(0,cards.get(j));
+                }
+                if(temp.size() ==5) break;
             }
-            else{
-                return;
+            if(temp.size() ==5){
+                if(straight.isEmpty()) straight = temp;
+                if(straight.get(4).getValue()<temp.get(4).getValue()){
+                    straight = temp;
+                }
             }
         }
-
-        bestHand = straight; return;
+        if(straight.size() ==5) {
+            bestHand = straight;
+            highCardValue = straight.get(4).getValue();
+        }
     }
+
+
 
     @Override
     public String toString(){

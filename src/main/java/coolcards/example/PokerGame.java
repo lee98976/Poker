@@ -61,8 +61,9 @@ public class PokerGame {
     }
 
     public void PrintAllPlayerStatus(){
+        System.out.println(playerList.get(0));
         for(int i = 0; i < playerList.size(); i++){
-            System.out.println(playerList.get(i));
+        //System.out.println(playerList.get(i));
         }
     }
 }
