@@ -17,6 +17,7 @@ public class Main {
         PokerGame game = new PokerGame();
         game.Setup();
         game.StartGame();
-        game.PrintAllPlayerStatus();
+        game.PrintScreen();
+        //game.PrintAllPlayerStatus();
     }
 }

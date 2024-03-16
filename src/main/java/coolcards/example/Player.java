@@ -3,6 +3,15 @@ package coolcards.example;
 public class Player {
     String playerName;
     int playerMoney;
+    int currentBet; //How much money you put it
+    public int getCurrentBet() {
+        return currentBet;
+    }
+
+    public void setCurrentBet(int currentBet) {
+        this.currentBet = currentBet;
+    }
+
     Hand playerHand;
 
     public Player(String playerName, int playerMoney) {
