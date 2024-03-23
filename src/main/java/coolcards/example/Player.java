@@ -23,6 +23,16 @@ public class Player {
     public void SetHand(Hand playerHand){
         this.playerHand = playerHand;
     }
+    public String GetName(){
+        return playerName;
+    }
+    public int getPlayerMoney(){
+        return playerMoney;
+    }
+    public void setPlayerMoney(int playerMoney) {
+        this.playerMoney = playerMoney;
+    }
+    
 
     @Override
     public String toString() {
