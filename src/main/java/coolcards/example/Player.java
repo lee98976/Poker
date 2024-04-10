@@ -4,6 +4,8 @@ public class Player {
     String playerName;
     int playerMoney;
     int currentBet; //How much money you put it
+    Hand playerHand;
+
     public int getCurrentBet() {
         return currentBet;
     }
@@ -12,7 +14,12 @@ public class Player {
         this.currentBet = currentBet;
     }
 
-    Hand playerHand;
+    
+    public Hand getHand()
+    {
+        return playerHand;
+    }
+    
 
     public Player(String playerName, int playerMoney) {
         playerHand = new Hand();

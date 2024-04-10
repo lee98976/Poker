@@ -8,12 +8,28 @@ public class Hand {
     int rank;
     int highCardValue;
 
+    public int getRank() {
+        return rank;
+    }
+
+    public int getHighCardValue() {
+        return highCardValue;
+    }
+
     public Hand(){
         cards = new ArrayList<Card>();
     }
 
+    public ArrayList<Card> getCards(){
+        return cards;
+    }
     public void AddCard(Card card){
         cards.add(card);
+    }
+    
+
+    public void SetHand(ArrayList<Card> cards){
+        cards = cards;
     }
 
     public void Sort(){

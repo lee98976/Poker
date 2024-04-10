@@ -2,6 +2,7 @@ package coolcards.example;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Random;
 
 public class PokerGame {
     //Game Variables
@@ -10,8 +11,10 @@ public class PokerGame {
     int bigBlind;
     int smallBlind;
     int bigPot;
-    int smallPot;
+    int smallPot;                                                                       
+    int FPTNP;
     ArrayList<Integer> playersStillInIndex = new ArrayList<Integer>();
+    ArrayList<Card> river = new ArrayList<Card>();
     Deck myDeck;
     ArrayList<Player> playerList;
     Scanner scanner;
@@ -75,10 +78,12 @@ public class PokerGame {
         }
     }
 
-    public void PrintScreen(){
+    public void UpdateScreen(){
+        clearScreen();
         FancyTextWrap(playerList.get(0).toString());
         FancyTextWrap(playerList.get(1).toString());
         FancyTextWrap(playerList.get(2).toString());
+        FancyTextWrap(playerList.get(3).toString());
         System.out.println("----------------------------------------------------------------------");
     }
 
@@ -96,12 +101,62 @@ public class PokerGame {
         }
     }
 
-    public void PrintAllPlayerStatus(){
-        System.out.println(playerList.get(0));
-        for(int i = 0; i < playerList.size(); i++){
-        
-        //System.out.println(playerList.get(i));
+    public void CheckAndCallMove(int playerIndex){
+        //System.out.println("You have checked at no additional expense.");
+        PayMoney(playerList.get(playerIndex), standardBet - playerList.get(playerIndex).getCurrentBet());
+    }
+
+    public void Options(int playerIndex){
+        int option = scanner.nextInt();
+
+        if (option == 1) CheckAndCallMove(playerIndex);
+        else if (option == 2) RaiseMove(playerIndex);
+        else if (option == 3) FoldMove(playerIndex);
+    }
+
+    public void ComputerOptions(int playerIndex) {
+        Random rand = new Random();
+        int option = rand.nextInt(1, 8);
+
+
+        if (option < 5) CheckAndCallMove(playerIndex);
+        else if (option < 7) ComputerRaiseMove(playerIndex);
+        else if (option < 8) FoldMove(playerIndex);
+    }
+
+    void ComputerRaiseMove(int playerIndex) {
+        Random rand = new Random();
+        Player computer = playerList.get(playerIndex);
+        int minimumRaise = computer.getPlayerMoney() / 10;
+        int raiseAmount = rand.nextInt(computer.getPlayerMoney() - minimumRaise) + minimumRaise;
+        standardBet += raiseAmount;    
+        PayMoney(computer, raiseAmount + standardBet - computer.getCurrentBet());
+        System.out.println(computer.GetName() + " has raised by " + raiseAmount + " dollars. Money: " + computer.getPlayerMoney());
+        FPTNP = playerIndex;
+    }
+
+    
+
+    public void RaiseMove(int playerIndex){
+        System.out.println("How much money would you like to raise the standard bet by?");
+        int raiseAmount = scanner.nextInt();
+        int playerMoney = playerList.get(playerIndex).getPlayerMoney();
+        if (playerMoney < raiseAmount + playerList.get(playerIndex).getCurrentBet()){
+            System.out.println("You can't raise more money than you have.");
+            Options(playerIndex); //Try again
         }
+        else {
+            standardBet += raiseAmount;
+            PayMoney(playerList.get(playerIndex), raiseAmount + standardBet - playerList.get(playerIndex).getCurrentBet());
+            System.out.println("You have raised by " + raiseAmount + " dollars. Money: " + playerList.get(playerIndex).getPlayerMoney());
+            FPTNP = playerIndex;
+        }    
+    }
+
+    public void FoldMove(int playerIndex){
+        System.out.println(playerList.get(playerIndex).GetName() + " has folded!");
+        //Remove the player from session
+        playersStillInIndex.remove(playerIndex);
     }
 
     public void RunTurnOnePlayer(int playerIndex){
@@ -113,45 +168,45 @@ public class PokerGame {
         }
 
         if (playerIndex == 0) { //Run player turn
-            if (playerList.get(playerIndex).getCurrentBet() == standardBet){ //They are the dealer.
+            if (playerList.get(playerIndex).getCurrentBet() == standardBet){
                 System.out.println("1: Check, 2: Raise, 3: Fold");
-                int option = scanner.nextInt();
-                int raiseAmount = 0;
-
-                if (option == 1) {
-                    System.out.println("You have checked at no additional expense.");
-                }
-                else if (option == 2) {
-                    System.out.println("How much money would you like to raise the pot by?");
-                    raiseAmount = scanner.nextInt();
-                    System.out.println("You have raised by " + raiseAmount + " dollars.");
-                    if(playerList.get(playerIndex).getPlayerMoney() < raiseAmount + playerList.get(playerIndex).getCurrentBet()){
-                        System.out.println("You can't raise more money than you have.");  
-                    }
-                    playerList.get(playerIndex).setPlayerMoney(playerList.get(playerIndex).getPlayerMoney()); //WORK IN PROGRESS
-                }
-                else if (option == 3) {
-                    System.out.println(playerList.get(playerIndex).GetName() + " has folded!");
-                    //Remove the player from session
-                    playersStillInIndex.remove(playerIndex);
-                }
+                Options(playerIndex);
             } 
-            else {
+            else { 
                 System.out.println("1: Call, 2: Raise, 3: Fold");
+                Options(playerIndex);
             }
-    
         }
         else { //Run Computer Turn
             System.out.println(playerList.get(playerIndex).GetName() + "'s turn");
         }
-        }
     }
-   
+
     
+    public void PayMoney(Player player, int money){
+        bigPot += money;
+        player.setCurrentBet(money + player.getCurrentBet());
+        player.setCurrentBet(player.getCurrentBet() - money);
+
+    }
+
+    void setInitialBets(){
+        //Set initial bets
+        Player dealer = playerList.get(currentDealer);
+        PayMoney(dealer, bigBlind);
+        
+        int temp = currentDealer + 1;
+        if (temp > 3) temp -= 4;
+        Player nextDealer = playerList.get(temp);
+        PayMoney(nextDealer, temp);
+    }
 
     public void RunSession(){
+        setInitialBets();
+        river.clear();
         while (true) {
-            RunCompleteTurn();
+            RunCycle();
+
             bigBlind = (int) Math.ceil(1.25 * bigBlind);
             smallBlind = (int) Math.ceil(0.5 * bigBlind);
             bigPot = 0;
@@ -159,15 +214,79 @@ public class PokerGame {
 
             currentDealer += 1;
             if (currentDealer > 3) currentDealer -= 4;
+
             
             //When all cards are revealed, break out and then evaluate
             //Then, give all the money to the winner
         }
     }
-    public void RunCompleteTurn(){
-        for (Integer i : playersStillInIndex) {
-            RunTurnOnePlayer(i);
+    public void RevealCard(){
+        
+        if (river.size() == 0) {
+            river.add(myDeck.DrawCard());
+            river.add(myDeck.DrawCard());
+            river.add(myDeck.DrawCard());
+        }
+        else if(river.size()==3) {
+            river.add(myDeck.DrawCard());
+        }
+        else if (river.size()==4) {
+            river.add(myDeck.DrawCard());
+        }
+    }
+
+    public void RunTurn(){
+        int currentPlayer = currentDealer;
+        FPTNP = currentPlayer;
+        while (true) {
+            if (playersStillInIndex.contains(currentPlayer)) {
+                RunTurnOnePlayer(currentPlayer);
+                UpdateScreen();
+            
+                currentPlayer += 1;
+                if (currentPlayer > 3) currentPlayer = 0;
+                if (currentPlayer == FPTNP) {
+                   break;
+                }
+            }
+            else {
+                currentPlayer += 1;
+            }
+            
         }
         System.out.println("The turn has been completed.");
+    } 
+
+    
+    public static void clearScreen() {  
+        System.out.print("\033[H\033[2J");  
+        System.out.flush();  
+    }
+
+    public void RunCycle(){
+        while (true) {
+            RunTurn();
+            RevealCard();
+            
+            if (river.size() == 5) { //Showdown
+                ArrayList<Integer> deckValue = new ArrayList<Integer>();
+                for (int i: playersStillInIndex){
+                    ArrayList<Card> combinedCards = new ArrayList<Card>();
+                    combinedCards.addAll(river);
+                    combinedCards.addAll(playerList.get(i).getHand().getCards());
+                    Hand combinedHand = new Hand();
+                    combinedHand.SetHand(combinedCards);
+                    combinedHand.Sort();
+                    combinedHand.Evaluate();
+                    int someValue = combinedHand.getRank() * 20 - combinedHand.getHighCardValue();
+                    deckValue.add(someValue);
+                }
+                int min = Integer.MAX_VALUE;
+                int winnerIndex;
+                for (int i = 0; i < deckValue.size(); i++) {
+                    //CONTINUE IWFEGCipohhveqoipfwzjugmoefwhmjopkevgjmk
+                }
+            }
+        }
     }
 }
