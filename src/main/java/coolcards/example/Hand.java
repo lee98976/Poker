@@ -133,7 +133,7 @@ public class Hand {
         highCardValue = 0;
         //HighCard
         
-        bestHand = new ArrayList<Card>(cards.subList(cards.size()-5, cards.size()));
+        bestHand = new ArrayList<Card>(cards.subList(cards.size()-5, cards.size()-1));
         if(!bestHand.isEmpty()){
             rank = 10;
             highCardValue = bestHand.get(4).getValue();

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Random;
 
+
 public class PokerGame {
     //Game Variables
     int currentDealer = 0;
@@ -68,10 +69,6 @@ public class PokerGame {
         }
 
         while (true) {
-            playersStillInIndex.clear();
-            for (int i = 0; i < playerList.size(); i++) {
-                playersStillInIndex.add(i);
-            }
             RunSession();
             //When players reach zero money, kick the player out
             //When there is one player, break out and announce the winner
@@ -127,8 +124,9 @@ public class PokerGame {
     void ComputerRaiseMove(int playerIndex) {
         Random rand = new Random();
         Player computer = playerList.get(playerIndex);
-        int minimumRaise = computer.getPlayerMoney() / 10;
-        int raiseAmount = rand.nextInt(computer.getPlayerMoney() - minimumRaise) + minimumRaise;
+        int minimumRaise = computer.getPlayerMoney() / 100;
+        int maxRaise = computer.getPlayerMoney() / 10;
+        int raiseAmount = rand.nextInt(minimumRaise, maxRaise);
         standardBet += raiseAmount;    
         PayMoney(computer, raiseAmount + standardBet - computer.getCurrentBet());
         System.out.println(computer.GetName() + " has raised by " + raiseAmount + " dollars. Money: " + computer.getPlayerMoney());
@@ -156,17 +154,14 @@ public class PokerGame {
     public void FoldMove(int playerIndex){
         System.out.println(playerList.get(playerIndex).GetName() + " has folded!");
         //Remove the player from session
-        playersStillInIndex.remove(playerIndex);
+        for (int i = 0; i < playersStillInIndex.size(); i++) {
+            if (playersStillInIndex.get(i) == playerIndex) {
+                playersStillInIndex.remove(i);
+            }
+        }
     }
 
     public void RunTurnOnePlayer(int playerIndex){
-        if (playerIndex == currentDealer) { //Dealer
-            playerList.get(playerIndex).setCurrentBet(bigBlind);
-        }
-        else if (playerIndex == currentDealer + 1 || playerIndex == currentDealer - 3) { //Next for dealer
-            playerList.get(playerIndex).setCurrentBet(smallBlind);
-        }
-
         if (playerIndex == 0) { //Run player turn
             if (playerList.get(playerIndex).getCurrentBet() == standardBet){
                 System.out.println("1: Check, 2: Raise, 3: Fold");
@@ -179,6 +174,7 @@ public class PokerGame {
         }
         else { //Run Computer Turn
             System.out.println(playerList.get(playerIndex).GetName() + "'s turn");
+            ComputerOptions(playerIndex);
         }
     }
 
@@ -186,42 +182,72 @@ public class PokerGame {
     public void PayMoney(Player player, int money){
         bigPot += money;
         player.setCurrentBet(money + player.getCurrentBet());
-        player.setCurrentBet(player.getCurrentBet() - money);
-
+        player.setPlayerMoney(player.getPlayerMoney() - money);
+        System.out.println(player.GetName() + " has bet " + money + " dollars");
     }
 
-    void setInitialBets(){
+    private void setInitialBets(){
         //Set initial bets
         Player dealer = playerList.get(currentDealer);
         PayMoney(dealer, bigBlind);
-        
         int temp = currentDealer + 1;
-        if (temp > 3) temp -= 4;
+        if (temp > 3) temp = 0;
         Player nextDealer = playerList.get(temp);
-        PayMoney(nextDealer, temp);
+        PayMoney(nextDealer, smallBlind);
     }
 
     public void RunSession(){
+        for (int i = 0; i < playerList.size(); i++) {
+            playersStillInIndex.add(i);
+            playerList.get(i).setCurrentBet(0);
+        }
         setInitialBets();
-        river.clear();
-        while (true) {
-            RunCycle();
+        System.out.println("running Cycle now");
+        RunCycle();
 
-            bigBlind = (int) Math.ceil(1.25 * bigBlind);
-            smallBlind = (int) Math.ceil(0.5 * bigBlind);
+        if (river.size() == 5) { //Showdown
+            RunTurn(); //Run a final turn
+            System.out.println("Showdown");
+            ArrayList<Integer> deckValue = new ArrayList<Integer>();
+            for (int i: playersStillInIndex){
+                ArrayList<Card> combinedCards = new ArrayList<Card>();
+                combinedCards.addAll(river);
+                combinedCards.addAll(playerList.get(i).getHand().getCards());
+                Hand combinedHand = new Hand();
+                combinedHand.SetHand(combinedCards);
+                combinedHand.Sort();
+                combinedHand.Evaluate();
+                int someValue = combinedHand.getRank() * 20 - combinedHand.getHighCardValue();
+                deckValue.add(someValue);
+            }
+            int min = Integer.MAX_VALUE;
+            int winnerIndex = 929929;
+            for (int i = 0; i < deckValue.size(); i++) {
+                if (deckValue.get(i) < min) {
+                    winnerIndex = i;
+                    min = deckValue.get(i);
+                }
+            }
+            winnerIndex = deckValue.get(winnerIndex);
+            System.out.println("Player " + winnerIndex + " has won!");
+            playerList.get(winnerIndex).setPlayerMoney(playerList.get(winnerIndex).getPlayerMoney() + bigPot);
             bigPot = 0;
             smallPot = 0;
-
-            currentDealer += 1;
-            if (currentDealer > 3) currentDealer -= 4;
-
-            
-            //When all cards are revealed, break out and then evaluate
-            //Then, give all the money to the winner
+            return;
         }
+
+        //Reset
+        river.clear();
+        playersStillInIndex.clear();
+        bigBlind = (int) Math.ceil(1.25 * bigBlind);
+        smallBlind = (int) Math.ceil(0.5 * bigBlind);
+        bigPot = 0;
+        smallPot = 0;
+
+        currentDealer += 1;
+        if (currentDealer > 3) currentDealer -= 4;
     }
     public void RevealCard(){
-        
         if (river.size() == 0) {
             river.add(myDeck.DrawCard());
             river.add(myDeck.DrawCard());
@@ -239,7 +265,9 @@ public class PokerGame {
         int currentPlayer = currentDealer;
         FPTNP = currentPlayer;
         while (true) {
+            System.out.println(playersStillInIndex);
             if (playersStillInIndex.contains(currentPlayer)) {
+                System.out.println(("Turn:" + currentPlayer));
                 RunTurnOnePlayer(currentPlayer);
                 UpdateScreen();
             
@@ -265,28 +293,9 @@ public class PokerGame {
 
     public void RunCycle(){
         while (true) {
+            System.out.println("running turn now");
             RunTurn();
             RevealCard();
-            
-            if (river.size() == 5) { //Showdown
-                ArrayList<Integer> deckValue = new ArrayList<Integer>();
-                for (int i: playersStillInIndex){
-                    ArrayList<Card> combinedCards = new ArrayList<Card>();
-                    combinedCards.addAll(river);
-                    combinedCards.addAll(playerList.get(i).getHand().getCards());
-                    Hand combinedHand = new Hand();
-                    combinedHand.SetHand(combinedCards);
-                    combinedHand.Sort();
-                    combinedHand.Evaluate();
-                    int someValue = combinedHand.getRank() * 20 - combinedHand.getHighCardValue();
-                    deckValue.add(someValue);
-                }
-                int min = Integer.MAX_VALUE;
-                int winnerIndex;
-                for (int i = 0; i < deckValue.size(); i++) {
-                    //CONTINUE IWFEGCipohhveqoipfwzjugmoefwhmjopkevgjmk
-                }
-            }
         }
     }
 }
