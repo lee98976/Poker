@@ -1,6 +1,7 @@
 package coolcards.example;
 
 import java.util.Scanner;
+import java.util.Random;
 
 public class Player {
     String playerName;
@@ -8,8 +9,8 @@ public class Player {
     int currentBet; // How much money you put it
     Hand playerHand;
     boolean isPlayerControlled = false;
-
     boolean isFolded = false;
+    boolean isAllIn = false;
 
     public int getCurrentBet() {
         return currentBet;
@@ -30,81 +31,105 @@ public class Player {
         this.isPlayerControlled = isPlayerControlled;
     }
 
-    public void DoTurn(int standardBet) {
+    public void ResetPlayer(){
+        isFolded = false;
+        isAllIn = false;
+        currentBet = 0;
+        playerHand = null;
+    }
+
+    public int DoTurn(int standardBet) {
         if (isFolded)
-            return;
+            return 0;
 
         if (isPlayerControlled) {
-            if (currentBet >= standardBet) {
-                System.out.println("1: Check, 2: Raise, 3: Fold");
-                PickOption(standardBet);
-
-            } else {
-                System.out.println("1: Call, 2: Raise, 3: Fold");
-            }
+            if (currentBet >= standardBet) System.out.println("1: Check, 2: Raise, 3: Fold");
+            else System.out.println("1: Call, 2: Raise, 3: Fold");
+            return PickOption(standardBet);
         } else {
-            System.out.println(playerName + "'s turn");
+            //AI CONTROLLED
+            // System.out.println(playerName + "'s turn");
+            return 0;
         }
     }
 
-    public void PickOption(int standardBet) {
+    public int PickOption(int standardBet) {
         Scanner scanner = new Scanner(System.in);
+        int amount = 0;
 
         while (true) {
             int option = scanner.nextInt();
             if (option == 1)
-                CheckAndCallMove(standardBet);
+                amount = CheckAndCallMove(standardBet);
             else if (option == 2)
-                RaiseMove(standardBet);
+                amount = RaiseMove(standardBet);
             else if (option == 3)
-                FoldMove();
+                amount = FoldMove();
             else {
                 System.out.println("Invalid Input");
                 continue;
             }
             break;
         }
+
         scanner.close();
-
+        return amount;
     }
 
-    public void CheckAndCallMove(int standardBet) {
+    public int CheckAndCallMove(int standardBet) {
         if (currentBet >= standardBet) {
+            //Check
             System.out.println(playerName + " checked\n");
+            return 0;
         } else {
-            // System.out.println("You have checked at no additional expense.");
-            PayMoney(playerList.get(playerIndex), standardBet - playerList.get(playerIndex).getCurrentBet());
+            //Call
+            return standardBet - currentBet;
         }
 
     }
 
-    public void RaiseMove(int playerIndex) {
-        System.out.println("How much money would you like to raise the standard bet by?");
-        int raiseAmount = scanner.nextInt();
-        int playerMoney = playerList.get(playerIndex).getPlayerMoney();
-        if (playerMoney < raiseAmount + playerList.get(playerIndex).getCurrentBet()) {
-            System.out.println("You can't raise more money than you have.");
-            Options(playerIndex); // Try again
-        } else {
-            standardBet += raiseAmount;
-            PayMoney(playerList.get(playerIndex),
-                    raiseAmount + standardBet - playerList.get(playerIndex).getCurrentBet());
-            System.out.println("You have raised by " + raiseAmount + " dollars. Money: "
-                    + playerList.get(playerIndex).getPlayerMoney());
-            FPTNP = playerIndex;
+    public int RaiseMove(int standardBet, int raiseAmount) {
+        while(true){
+            int actualAmount = 0;
+
+            //Wrong inputs
+            if (raiseAmount <= 0) {
+                System.out.println("You have to raise more than $0");
+                continue;
+            }
+            else if (playerMoney < raiseAmount + standardBet - currentBet) {
+                System.out.println("You can't raise more money than you have.");
+                continue;
+            } 
+            //Right inputs
+            else {
+                actualAmount = raiseAmount + standardBet - currentBet;
+                System.out.println(playerName + " has raised by " + raiseAmount + " dollars. Money: " + playerMoney);
+            }
+            scanner.close();
+            return actualAmount;        
         }
+        
     }
 
-    public void FoldMove() {
-        System.out.println(playerList.get(playerIndex).GetName() + " has folded!");
-        // Remove the player from session
-        /*
-         * for (int i = 0; i < playersStillInIndex.size(); i++) {
-         * if (playersStillInIndex.get(i) == playerIndex) {
-         * playersStillInIndex.remove(i);
-         * }
-         * }
-         */
+    public int FoldMove() {
+        System.out.println(playerName + " has folded!");
+        isFolded = true;
+        return 0;
+    }
+
+    //Computer Functions
+    public void ComputerOptions(int standardBet) {
+        Random rand = new Random();
+        int option = rand.nextInt(1, 8);
+        int amount = 0;
+
+        if (option < 5)
+            amount = CheckAndCallMove(standardBet);
+        else if (option < 7)
+            amount = RaiseMove(standardBet);
+        else if (option < 8)
+            amount = FoldMove(standardBet);
     }
 
     public void SetHand(Hand playerHand) {

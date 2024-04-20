@@ -16,6 +16,7 @@ public class PokerGame {
     int FPTNP;
 
     int sessionNumber;
+    int cycleNumber;
     ArrayList<Card> river = new ArrayList<Card>();
     Deck myDeck;
     ArrayList<Player> playerList;
@@ -63,7 +64,8 @@ public class PokerGame {
     public void StartGame() throws InterruptedException {
         while (true) {
             ResetSessionData();
-            RunSession();
+            SetBlinds();
+            RunCycle();
             // When players reach zero money, kick the player out
             // When there is one player, break out and announce the winner
         }
@@ -74,11 +76,24 @@ public class PokerGame {
      */
     public void ResetSessionData() {
         sessionNumber += 1;
+        cycleNumber = 0;
         System.out.println("\n...Beginning session: " + sessionNumber);
         myDeck = new Deck();
         myDeck.Shuffle();
 
+        river.clear();
+        // playersStillInIndex.clear();
+        bigBlind = (int) Math.ceil(2 * bigBlind);
+        smallBlind = (int) Math.ceil(0.5 * bigBlind);
+        bigPot = 0;
+        smallPot = 0;
+
+        currentDealer += 1;
+        if (currentDealer > 3)
+            currentDealer -= 4;
+
         for (int i = 0; i < playerList.size(); i++) {
+            playerList.get(i).ResetPlayer();
             Hand newHand = myDeck.GetNewHand();
             playerList.get(i).SetHand(newHand);
         }
@@ -96,22 +111,44 @@ public class PokerGame {
         PayMoney(nextDealer, smallBlind);
     }
 
-    public void RunSession() throws InterruptedException {
-        SetBlinds();
+
+    public void RunCycle() throws InterruptedException {
+        int currentPlayer = currentDealer;
 
         while (true) {
-            RunCycle();
-            RevealCard();
+            //Missing check for winner of the game
+            boolean changeCycle = CheckCycleStatus();
+            if(changeCycle){
+                RevealCard();
+                cycleNumber++;
+                if(CheckForWinner()) break;
+            }
+            
+            int payAmount = playerList.get(currentPlayer).DoTurn(standardBet);
+            if(payAmount > 0) PayMoney(playerList.get(currentPlayer), currentPlayer);
+            UpdateScreen();
+
+            // Pass the turn
+            currentPlayer += 1;
+            if (currentPlayer > 3)
+                currentPlayer = 0;
+
         }
 
-        if (river.size() == 5) { // Showdown
-            RunTurn(); // Run a final turn
-            System.out.println("Showdown");
+    }
+
+    public boolean CheckForWinner(){
+        if (cycleNumber == 4) { 
+            // Showdown
+            System.out.println("---!Showdown!---");
             ArrayList<Integer> deckValue = new ArrayList<Integer>();
-            for (int i : playersStillInIndex) {
+
+            for (Player player: playerList) {
+                if(player.isFolded) continue;
+
                 ArrayList<Card> combinedCards = new ArrayList<Card>();
                 combinedCards.addAll(river);
-                combinedCards.addAll(playerList.get(i).getHand().getCards());
+                combinedCards.addAll(player.getHand().getCards());
                 Hand combinedHand = new Hand();
                 combinedHand.SetHand(combinedCards);
                 combinedHand.Sort();
@@ -132,36 +169,31 @@ public class PokerGame {
             playerList.get(winnerIndex).setPlayerMoney(playerList.get(winnerIndex).getPlayerMoney() + bigPot);
             bigPot = 0;
             smallPot = 0;
-            return;
+            return true;
         }
-
-        // Reset
-        river.clear();
-        // playersStillInIndex.clear();
-        bigBlind = (int) Math.ceil(1.25 * bigBlind);
-        smallBlind = (int) Math.ceil(0.5 * bigBlind);
-        bigPot = 0;
-        smallPot = 0;
-
-        currentDealer += 1;
-        if (currentDealer > 3)
-            currentDealer -= 4;
+        else {
+            return false;
+        }
     }
 
-    public void RunCycle() throws InterruptedException {
-        int currentPlayer = currentDealer;
+    public boolean CheckCycleStatus(){
 
-        while (true) {
-            playerList.get(currentPlayer).DoTurn(standardBet);
-            UpdateScreen();
+        boolean allPlayersReady = true;
 
-            // Pass the turn
-            currentPlayer += 1;
-            if (currentPlayer > 3)
-                currentPlayer = 0;
+        for(Player player:playerList) {
+            if(player.isFolded()) continue;
 
+            int bet = player.getCurrentBet();
+            if(player.getCurrentBet() > standardBet){
+                standardBet = player.getCurrentBet();
+                allPlayersReady = false;
+            }
+            else if (bet < standardBet){
+                allPlayersReady = false;
+            }
         }
 
+        return allPlayersReady;
     }
 
     public void UpdateScreen() {
@@ -184,31 +216,6 @@ public class PokerGame {
         } else {
             System.out.println(text);
         }
-    }
-
-    public void ComputerOptions(int playerIndex) {
-        Random rand = new Random();
-        int option = rand.nextInt(1, 8);
-
-        if (option < 5)
-            CheckAndCallMove(playerIndex);
-        else if (option < 7)
-            ComputerRaiseMove(playerIndex);
-        else if (option < 8)
-            FoldMove(playerIndex);
-    }
-
-    void ComputerRaiseMove(int playerIndex) {
-        Random rand = new Random();
-        Player computer = playerList.get(playerIndex);
-        int minimumRaise = computer.getPlayerMoney() / 100;
-        int maxRaise = computer.getPlayerMoney() / 10;
-        int raiseAmount = rand.nextInt(minimumRaise, maxRaise);
-        standardBet += raiseAmount;
-        PayMoney(computer, raiseAmount + standardBet - computer.getCurrentBet());
-        System.out.println(
-                computer.GetName() + " has raised by " + raiseAmount + " dollars. Money: " + computer.getPlayerMoney());
-        FPTNP = playerIndex;
     }
 
     public void PayMoney(Player player, int money) {
