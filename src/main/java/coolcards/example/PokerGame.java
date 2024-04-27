@@ -125,13 +125,15 @@ public class PokerGame {
             }
             
             int payAmount = playerList.get(currentPlayer).DoTurn(standardBet);
-            if(payAmount > 0) PayMoney(playerList.get(currentPlayer), currentPlayer);
+            if(payAmount > 0) PayMoney(playerList.get(currentPlayer), payAmount);
             UpdateScreen();
 
             // Pass the turn
             currentPlayer += 1;
             if (currentPlayer > 3)
                 currentPlayer = 0;
+
+            Thread.sleep(1000);
 
         }
 
@@ -152,6 +154,7 @@ public class PokerGame {
                 Hand combinedHand = new Hand();
                 combinedHand.SetHand(combinedCards);
                 combinedHand.Sort();
+                System.out.println(combinedHand);
                 combinedHand.Evaluate();
                 int someValue = combinedHand.getRank() * 20 - combinedHand.getHighCardValue();
                 deckValue.add(someValue);
@@ -197,12 +200,27 @@ public class PokerGame {
     }
 
     public void UpdateScreen() {
-        clearScreen();
+        //clearScreen();
         FancyTextWrap(playerList.get(0).toString());
         FancyTextWrap(playerList.get(1).toString());
         FancyTextWrap(playerList.get(2).toString());
         FancyTextWrap(playerList.get(3).toString());
         System.out.println("----------------------------------------------------------------------");
+        String theRiver = "The river is: ";
+        for (Card i : river) {
+            theRiver += i.toString() + ", ";
+        }
+        if (river.size() == 0) {
+            theRiver = "The river is empty.";
+        }
+        else
+            theRiver = theRiver.substring(0, theRiver.length() - 2);
+        
+        System.out.println(theRiver);
+
+        System.out.println("The standard bet is " + standardBet);
+        
+        System.out.println("---------------------------------------------------------------------- \n");
     }
 
     public void FancyTextWrap(String text) {
@@ -222,7 +240,7 @@ public class PokerGame {
         bigPot += money;
         player.setCurrentBet(money + player.getCurrentBet());
         player.setPlayerMoney(player.getPlayerMoney() - money);
-        System.out.println(player.GetName() + " has bet " + money + " dollars");
+        System.out.println(player.GetName() + " has spent " + money + " dollars");
     }
 
     public void RevealCard() {

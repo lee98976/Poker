@@ -4,6 +4,7 @@ import java.util.Scanner;
 import java.util.Random;
 
 public class Player {
+    Scanner scanner;
     String playerName;
     int playerMoney;
     int currentBet; // How much money you put it
@@ -29,6 +30,7 @@ public class Player {
         this.playerName = playerName;
         this.playerMoney = playerMoney;
         this.isPlayerControlled = isPlayerControlled;
+        scanner = new Scanner(System.in);
     }
 
     public void ResetPlayer(){
@@ -47,24 +49,28 @@ public class Player {
             else System.out.println("1: Call, 2: Raise, 3: Fold");
             return PickOption(standardBet);
         } else {
-            //AI CONTROLLED
-            // System.out.println(playerName + "'s turn");
-            return 0;
+            System.out.println(playerName + "'s turn");
+            return ComputerOptions(standardBet);
         }
     }
 
     public int PickOption(int standardBet) {
-        Scanner scanner = new Scanner(System.in);
         int amount = 0;
 
         while (true) {
             int option = scanner.nextInt();
-            if (option == 1)
+            if (option == 1) {
+                //System.out.println("shoulda");
                 amount = CheckAndCallMove(standardBet);
-            else if (option == 2)
-                amount = RaiseMove(standardBet);
-            else if (option == 3)
+            }
+            else if (option == 2) {
+                System.out.println("How much would you like to raise?");
+                int raiseAmount = scanner.nextInt();
+                amount = RaiseMove(standardBet, raiseAmount);
+            }
+            else if (option == 3) {
                 amount = FoldMove();
+            }
             else {
                 System.out.println("Invalid Input");
                 continue;
@@ -72,7 +78,6 @@ public class Player {
             break;
         }
 
-        scanner.close();
         return amount;
     }
 
@@ -104,9 +109,9 @@ public class Player {
             //Right inputs
             else {
                 actualAmount = raiseAmount + standardBet - currentBet;
-                System.out.println(playerName + " has raised by " + raiseAmount + " dollars. Money: " + playerMoney);
+                System.out.println(playerName + " has raised by " + raiseAmount + " dollars.");
             }
-            scanner.close();
+
             return actualAmount;        
         }
         
@@ -119,17 +124,25 @@ public class Player {
     }
 
     //Computer Functions
-    public void ComputerOptions(int standardBet) {
+    public int ComputerOptions(int standardBet) {
         Random rand = new Random();
         int option = rand.nextInt(1, 8);
         int amount = 0;
 
-        if (option < 5)
+        if (option < 4){
             amount = CheckAndCallMove(standardBet);
-        else if (option < 7)
-            amount = RaiseMove(standardBet);
-        else if (option < 8)
-            amount = FoldMove(standardBet);
+            //System.out.println("check or call");
+        }
+        else if (option < 7) {
+            int raiseAmount = rand.nextInt(playerMoney / 10, playerMoney / 5);
+            amount = RaiseMove(standardBet, raiseAmount);
+            //System.out.println("raise");
+        }
+        else if (option < 8) {
+            amount = FoldMove();
+            //System.out.println("fold");
+        }
+        return amount;
     }
 
     public void SetHand(Hand playerHand) {
