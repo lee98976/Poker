@@ -17,7 +17,7 @@ public class Main {
         // System.out.println("\n" + drawnCard);
 
         PokerGame game = new PokerGame();
-        System.out.println("Let's play some Poker!\n\n");
+        System.out.println("Let's play some Poker!\n");
         Thread.sleep(1000);
         game.Setup();
         game.StartGame();

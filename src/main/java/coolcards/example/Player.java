@@ -6,12 +6,14 @@ import java.util.Random;
 public class Player {
     Scanner scanner;
     String playerName;
+    String status = "on standby";
     int playerMoney;
     int currentBet; // How much money you put it
     Hand playerHand;
     boolean isPlayerControlled = false;
     boolean isFolded = false;
     boolean isAllIn = false;
+    boolean shouldRespondToRaise = true;
 
     public int getCurrentBet() {
         return currentBet;
@@ -33,11 +35,12 @@ public class Player {
         scanner = new Scanner(System.in);
     }
 
-    public void ResetPlayer(){
+    public void ResetPlayer() {
         isFolded = false;
         isAllIn = false;
         currentBet = 0;
         playerHand = null;
+        status = "on standby";
     }
 
     public int DoTurn(int standardBet) {
@@ -45,11 +48,13 @@ public class Player {
             return 0;
 
         if (isPlayerControlled) {
-            if (currentBet >= standardBet) System.out.println("1: Check, 2: Raise, 3: Fold");
-            else System.out.println("1: Call, 2: Raise, 3: Fold");
+            if (currentBet >= standardBet)
+                System.out.println("1: Check, 2: Raise, 3: Fold");
+            else
+                System.out.println("1: Call $" + (standardBet - currentBet) + ", 2: Raise, 3: Fold");
             return PickOption(standardBet);
         } else {
-            System.out.println(playerName + "'s turn");
+            System.out.print(playerName + "'s turn...");
             return ComputerOptions(standardBet);
         }
     }
@@ -60,18 +65,15 @@ public class Player {
         while (true) {
             int option = scanner.nextInt();
             if (option == 1) {
-                //System.out.println("shoulda");
+                // System.out.println("shoulda");
                 amount = CheckAndCallMove(standardBet);
-            }
-            else if (option == 2) {
+            } else if (option == 2) {
                 System.out.println("How much would you like to raise?");
                 int raiseAmount = scanner.nextInt();
                 amount = RaiseMove(standardBet, raiseAmount);
-            }
-            else if (option == 3) {
+            } else if (option == 3) {
                 amount = FoldMove();
-            }
-            else {
+            } else {
                 System.out.println("Invalid Input");
                 continue;
             }
@@ -83,64 +85,66 @@ public class Player {
 
     public int CheckAndCallMove(int standardBet) {
         if (currentBet >= standardBet) {
-            //Check
-            System.out.println(playerName + " checked\n");
+            // Check
+            status = playerName + " checked";
+            System.out.println(status);
             return 0;
         } else {
-            //Call
+            // Call
+            status = playerName + " called for $" + (standardBet - currentBet);
+            System.out.println(status);
             return standardBet - currentBet;
         }
 
     }
 
     public int RaiseMove(int standardBet, int raiseAmount) {
-        while(true){
+        while (true) {
             int actualAmount = 0;
 
-            //Wrong inputs
+            // Wrong inputs
             if (raiseAmount <= 0) {
                 System.out.println("You have to raise more than $0");
                 continue;
-            }
-            else if (playerMoney < raiseAmount + standardBet - currentBet) {
+            } else if (playerMoney < raiseAmount + standardBet - currentBet) {
                 System.out.println("You can't raise more money than you have.");
                 continue;
-            } 
-            //Right inputs
+            }
+            // Right inputs
             else {
                 actualAmount = raiseAmount + standardBet - currentBet;
-                System.out.println(playerName + " has raised by " + raiseAmount + " dollars.");
+                status = playerName + " raised $" + raiseAmount;
+                System.out.println(status);
             }
 
-            return actualAmount;        
+            return actualAmount;
         }
-        
+
     }
 
     public int FoldMove() {
-        System.out.println(playerName + " has folded!");
+        status = playerName + " has folded!";
+        System.out.println(status);
         isFolded = true;
         return 0;
     }
 
-    //Computer Functions
+    // Computer Functions
     public int ComputerOptions(int standardBet) {
         Random rand = new Random();
         int option = rand.nextInt(1, 8);
         int amount = 0;
 
-        if (option < 4){
+        if (option < 6) {
             amount = CheckAndCallMove(standardBet);
-            //System.out.println("check or call");
-        }
-        else if (option < 7) {
+            // System.out.println("check or call");
+        } else if (option < 7) {
             int raiseAmount = rand.nextInt(playerMoney / 10, playerMoney / 5);
             amount = RaiseMove(standardBet, raiseAmount);
-            //System.out.println("raise");
-        }
-        else if (option < 8) {
+            // System.out.println("raise");
+        } else if (option < 8) {
             amount = FoldMove();
-            //System.out.println("fold");
+            // System.out.println("fold");
         }
         return amount;
     }
@@ -166,6 +170,14 @@ public class Player {
         return playerName + ", Money: " + playerMoney + ", Hand: " + playerHand.toString();
     }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
     public String getPlayerName() {
         return playerName;
     }
@@ -184,5 +196,13 @@ public class Player {
 
     public void setFolded(boolean isFolded) {
         this.isFolded = isFolded;
+    }
+
+    public boolean getShouldRespondToRaise() {
+        return shouldRespondToRaise;
+    }
+
+    public void setShouldRespondToRaise(boolean shouldRespondToRaise) {
+        this.shouldRespondToRaise = shouldRespondToRaise;
     }
 }
